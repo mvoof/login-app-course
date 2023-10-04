@@ -1,14 +1,10 @@
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
 // Helper functions:
-const checkFormValid = (arr: Array<unknown>) => {
-  return arr.every((value) => value === true);
-};
-
 const checkEmailValid = (email: string) => {
   return email.includes('@');
 };
@@ -102,20 +98,19 @@ const Login = ({ onLogin }: LoginPropsType) => {
     initialPasswordState
   );
 
+  const { isValid: emailIsValid } = emailState;
+  const { isValid: passwordIsValid } = passwordState;
+
+  useEffect(() => {
+    setFormIsValid(emailIsValid && passwordIsValid);
+  }, [emailIsValid, passwordIsValid]);
+
   const emailChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatchEmail({ type: 'USER_EMAIL_INPUT', payload: e.target.value });
-
-    setFormIsValid(
-      checkFormValid([checkEmailValid(e.target.value), passwordState.isValid])
-    );
   };
 
   const passwordChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatchPassword({ type: 'USER_PASSWORD_INPUT', payload: e.target.value });
-
-    setFormIsValid(
-      checkFormValid([checkPasswordValid(e.target.value), emailState.isValid])
-    );
   };
 
   const validateEmailHandler = () => {
