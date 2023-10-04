@@ -1,51 +1,134 @@
-import { useEffect, useState } from 'react';
+import { useReducer, useState } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
+// Helper functions:
+const checkFormValid = (arr: Array<unknown>) => {
+  return arr.every((value) => value === true);
+};
+
+const checkEmailValid = (email: string) => {
+  return email.includes('@');
+};
+
+const checkPasswordValid = (password: string) => {
+  return password.trim().length > 6;
+};
+
 type LoginPropsType = {
   onLogin: (enteredEmail: string, enteredPassword: string) => void;
 };
 
+// Password reducer
+type PasswordActionType =
+  | { type: 'USER_PASSWORD_INPUT'; payload: string }
+  | { type: 'PASSWORD_INPUT_BLUR' };
+
+const initialPasswordState = {
+  value: '',
+  isValid: false,
+};
+
+const passwordReducer = (
+  state: typeof initialPasswordState,
+  action: PasswordActionType
+) => {
+  if (action.type === 'USER_PASSWORD_INPUT') {
+    return {
+      value: action.payload,
+      isValid: checkPasswordValid(action.payload),
+    };
+  }
+
+  if (action.type === 'PASSWORD_INPUT_BLUR') {
+    return {
+      value: state.value,
+      isValid: checkPasswordValid(state.value),
+    };
+  }
+
+  return {
+    value: '',
+    isValid: false,
+  };
+};
+
+// Email reducer
+type EmailActionType =
+  | { type: 'USER_EMAIL_INPUT'; payload: string }
+  | { type: 'EMAIL_INPUT_BLUR' };
+
+const initialEmailState = {
+  value: '',
+  isValid: false,
+};
+
+const emailReducer = (
+  state: typeof initialEmailState,
+  action: EmailActionType
+) => {
+  if (action.type === 'USER_EMAIL_INPUT') {
+    return {
+      value: action.payload,
+      isValid: checkEmailValid(action.payload),
+    };
+  }
+
+  if (action.type === 'EMAIL_INPUT_BLUR') {
+    return {
+      value: state.value,
+      isValid: checkEmailValid(state.value),
+    };
+  }
+
+  return {
+    value: '',
+    isValid: false,
+  };
+};
+
 const Login = ({ onLogin }: LoginPropsType) => {
-  const [enteredEmail, setEnteredEmail] = useState<string>('');
-  const [emailIsValid, setEmailIsValid] = useState<boolean>(true);
-  const [enteredPassword, setEnteredPassword] = useState<string>('');
-  const [passwordIsValid, setPasswordIsValid] = useState<boolean>(true);
   const [formIsValid, setFormIsValid] = useState<boolean>(false);
 
-  useEffect(() => {
-    setFormIsValid(
-      enteredEmail.includes('@') && enteredPassword.trim().length > 6
-    );
-  }, [enteredEmail, enteredPassword]);
+  const [emailState, dispatchEmail] = useReducer(
+    emailReducer,
+    initialEmailState
+  );
 
-  useEffect(() => {
-    setFormIsValid(
-      enteredPassword.trim().length > 6 && enteredEmail.includes('@')
-    );
-  }, [enteredEmail, enteredPassword]);
+  const [passwordState, dispatchPassword] = useReducer(
+    passwordReducer,
+    initialPasswordState
+  );
 
   const emailChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEnteredEmail(e.target.value.trim());
+    dispatchEmail({ type: 'USER_EMAIL_INPUT', payload: e.target.value });
+
+    setFormIsValid(
+      checkFormValid([checkEmailValid(e.target.value), passwordState.isValid])
+    );
   };
 
   const passwordChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEnteredPassword(e.target.value.trim());
+    dispatchPassword({ type: 'USER_PASSWORD_INPUT', payload: e.target.value });
+
+    setFormIsValid(
+      checkFormValid([checkPasswordValid(e.target.value), emailState.isValid])
+    );
   };
 
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes('@'));
+    dispatchEmail({ type: 'EMAIL_INPUT_BLUR' });
   };
 
   const validatePasswordHandler = () => {
-    setPasswordIsValid(enteredPassword.trim().length > 6);
+    dispatchPassword({ type: 'PASSWORD_INPUT_BLUR' });
   };
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onLogin(enteredEmail, enteredPassword);
+    onLogin(emailState.value, passwordState.value);
   };
 
   return (
@@ -53,14 +136,14 @@ const Login = ({ onLogin }: LoginPropsType) => {
       <form onSubmit={submitHandler}>
         <div
           className={`${classes.control} ${
-            emailIsValid === false ? classes.invalid : ''
+            emailState.isValid === false ? classes.invalid : ''
           }`}
         >
           <label htmlFor="email">E-Mail</label>
           <input
             type="email"
             id="email"
-            value={enteredEmail}
+            value={emailState.value}
             onChange={emailChangeHandler}
             onBlur={validateEmailHandler}
           />
@@ -68,14 +151,14 @@ const Login = ({ onLogin }: LoginPropsType) => {
 
         <div
           className={`${classes.control} ${
-            passwordIsValid === false ? classes.invalid : ''
+            passwordState.isValid === false ? classes.invalid : ''
           }`}
         >
           <label htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
-            value={enteredPassword}
+            value={passwordState.value}
             onChange={passwordChangeHandler}
             onBlur={validatePasswordHandler}
           />
