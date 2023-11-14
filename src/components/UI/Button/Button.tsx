@@ -1,10 +1,10 @@
 import classes from './Button.module.css';
 
 type ButtonPropsType = {
-  type: 'submit';
-  className: string;
+  type?: 'submit';
+  className?: string;
   onClick: () => void;
-  disabled: boolean;
+  disabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -20,7 +20,7 @@ const Button = ({
       type={type || 'button'}
       className={`${classes.button} ${className}`}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || false}
     >
       {children}
     </button>
